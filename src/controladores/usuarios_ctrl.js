@@ -1,4 +1,5 @@
 import { conmysql } from "../bd.js";
+import crypto from "crypto";
 
 // PRESENTAR (get)
 export const getUsuarios = async(req,res) => {
@@ -15,24 +16,29 @@ export const getUsuarios = async(req,res) => {
 } 
 
 // INSERTAR NUEVO REGISTRO (post)
-export const postUsuarios = async(req,res) => {
-    try{
-        //extraer los campos del cuerpo de la solicitud
+export const postUsuarios = async (req, res) => {
+    try {
+        // Extraer los campos del cuerpo de la solicitud
         const { usr_usuario, usr_clave, usr_nombre, usr_telefono, usr_correo, usr_activo } = req.body;
+
+        // Hashear la contraseña con MD5
+        const hashedPassword = crypto.createHash('md5').update(usr_clave).digest('hex');
+
+        // Insertar en la base de datos
         const [result] = await conmysql.query(
-            'INSERT INTO usuarios (usr_usuario, usr_clave, usr_nombre, usr_telefono, usr_correo, usr_activo) VALUES  (?,?,?,?,?,?)',
-            [ usr_usuario, usr_clave, usr_nombre, usr_telefono, usr_correo, usr_activo ]
-        )
+            'INSERT INTO usuarios (usr_usuario, usr_clave, usr_nombre, usr_telefono, usr_correo, usr_activo) VALUES (?,?,?,?,?,?)',
+            [usr_usuario, hashedPassword, usr_nombre, usr_telefono, usr_correo, usr_activo]
+        );
 
         res.send({
             id: result.insertId
-        })
-    }catch (error){
+        });
+    } catch (error) {
         return res.status(500).json({
             message: "Error en el servidor"
-        })
+        });
     }
-}
+};
 
 // ACTUALIZAR TODOS LOS CAMPOS (put)
 export const putUsuarios = async(req,res) =>{
